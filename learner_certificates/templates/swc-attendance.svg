@@ -1277,12 +1277,12 @@
          y="0"
          font-size="14"
          id="tspan6264"
-         style="font-size:14px;fill:#808285;font-family:ArialMT">This certificate has been awarded for successfully completing the basic</tspan><tspan
+         style="font-size:14px;fill:#808285;font-family:ArialMT">This certificate has been awarded for participating in the basic software</tspan><tspan
          x="0"
          y="25.6"
          font-size="14"
          id="tspan6266"
-         style="font-size:14px;fill:#808285;font-family:ArialMT">software skills training run by Software Carpentry.</tspan><tspan
+         style="font-size:14px;fill:#808285;font-family:ArialMT">skills training run by Software Carpentry.</tspan><tspan
          x="0"
          y="51.200001"
          font-size="14"
@@ -1292,7 +1292,7 @@
          y="76.800003"
          font-size="14"
          id="tspan6270"
-         style="font-size:14px;fill:#808285;font-family:ArialMT">task automation, version control, and modular programming.</tspan><tspan
+         style="font-size:14px;fill:#808285;font-family:ArialMT">task automation, version control, and modular programming{% if language is defined %} using {{ language }}{% endif %}.</tspan><tspan
          x="0"
          y="118"
          font-size="14"
@@ -2716,7 +2716,7 @@
      id="text7452"
      x="167.68169"
      y="107.3148"
-     style="font-size:36px;fill:#414042;font-family:Arial-BoldMT">Certificate of Achievement</text>
+     style="font-size:36px;fill:#414042;font-family:Arial-BoldMT">Certificate of Participation</text>
 <g
      id="g7454"><rect
        x="753.76"

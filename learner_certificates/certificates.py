@@ -87,6 +87,9 @@ def parse_args():
     parser.add_argument(
         '-b', '--badge', dest='badge_type', help='Type of badge')
     parser.add_argument(
+        '-l', '--language', choices=['Python', 'R'],
+        help='set flavour of software carpentry course')
+    parser.add_argument(
         '-o', '--output-dir', default=Path.cwd(), type=Path,
         help='Output directory (current by default)')
     parser.add_argument(
@@ -121,10 +124,12 @@ def process_csv(args, env):
     if 'badge' not in data.columns:
         check(args.badge_type is not None, "need to specify badge type")
         data['badge'] = args.badge_type
+    if 'language' not in data.columns:
+        data['language'] = args.language
     for _, row in data.iterrows():
         create_certificate(
-            row['badge'], row['instructor'], row['user_id'], row['name'],
-            row['date'], args.output_dir, env)
+            row['badge'], row['language'], row['instructor'], row['user_id'],
+            row['name'], row['date'], args.output_dir, env)
 
 
 def process_single(args, env):
@@ -138,25 +143,30 @@ def process_single(args, env):
     else:
         user_id = args.user_id
 
-    create_certificate(args.badge_type, args.instructor, user_id,
-                       args.name, args.date, args.output_dir, env)
+    create_certificate(
+        args.badge_type, args.language, args.instructor, user_id,
+        args.name, args.date, args.output_dir, env)
 
 
 def create_certificate(
-        badge_type, instructor, user_id, name, datestr, output, env):
+        badge_type, language, instructor, user_id, name, datestr, output, env):
     '''Create a single certificate.'''
 
     template = env.get_template(badge_type + ".svg")
     badge_path = output / Path(badge_type)
 
     if not badge_path.exists():
-        badge_path.mkdir()
+        badge_path.mkdir(parents=True)
     outputpdf = badge_path / Path(user_id).with_suffix('.pdf')
 
+    params = {"name": name,
+              "instructor": instructor,
+              "date": date.fromisoformat(datestr).strftime(DATE_FORMAT)}
+    if language is not None:
+        params['language'] = language
+
     tmp = tempfile.NamedTemporaryFile(suffix='.svg', delete=False)
-    tmp.write(bytes(template.render(
-        name=name, instructor=instructor,
-        date=date.fromisoformat(datestr).strftime(DATE_FORMAT)), 'utf-8'))
+    tmp.write(bytes(template.render(**params), 'utf-8'))
     cairosvg.svg2pdf(url=tmp.name, write_to=str(outputpdf), dpi=90)
 
 
