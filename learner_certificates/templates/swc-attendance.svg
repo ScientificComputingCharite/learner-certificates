@@ -3224,4 +3224,13 @@
            x="69.237999"
            y="529.729"
            id="rect8469"
-           style="fill:none" /></g></g></g></svg>
+           style="fill:none" /></g></g></g>
+{% if signature is defined %}<image
+   width="227.84"
+   height="65.919998"
+   preserveAspectRatio="none"
+   xlink:href="{{ signature }}"
+   id="image1097"
+   x="472.93158"
+   y="472.5947" />{% endif %}
+</svg>

@@ -102,6 +102,9 @@ def parse_args():
         '-d', '--date', default=date.isoformat(date.today()),
         help='Date of certificate, defaults to today')
     parser.add_argument(
+        '-s', '--signature', type=Path,
+        help="Image file containing a signature (350x100 pixels)")
+    parser.add_argument(
         '-i', '--instructor', help='Name of instructor')
     grp = parser.add_mutually_exclusive_group(required=True)
     grp.add_argument(
@@ -112,6 +115,11 @@ def parse_args():
         '-u', '--userid', dest='user_id',
         help='User ID, default construct from name')
     args = parser.parse_args()
+
+    if args.signature is not None:
+        if not args.signature.exists():
+            parser.error(f"signature image {args.signature} does not exist")
+        args.signature = args.signature.absolute()
 
     return args
 
@@ -128,7 +136,7 @@ def process_csv(args, env):
         data['badge'] = args.badge
     if 'user_id' not in data.columns:
         data['user_id'] = data['name'].apply(construct_user_name)
-    for k in ['date', 'language', 'duration', 'course_date']:
+    for k in ['date', 'language', 'duration', 'course_date', 'signature']:
         if k not in data.columns and getattr(args, k) is not None:
             data[k] = getattr(args, k)
     for _, row in data.iterrows():
@@ -149,7 +157,7 @@ def process_single(args, env):
     params = {}
     for k in ['badge', 'instructor', 'name', 'date']:
         params[k] = getattr(args, k)
-    for k in ['language', 'duration', 'course_date']:
+    for k in ['language', 'duration', 'course_date', 'signature']:
         if getattr(args, k) is not None:
             params[k] = getattr(args, k)
     params['user_id'] = user_id
