@@ -93,6 +93,9 @@ def parse_args():
         '-t', '--duration', type=int,
         help="set the number of hours of the course")
     parser.add_argument(
+        '-D', '--course-date',
+        help="set the date(s) when the course was held")
+    parser.add_argument(
         '-o', '--output-dir', default=Path.cwd(), type=Path,
         help='Output directory (current by default)')
     parser.add_argument(
@@ -120,21 +123,19 @@ def process_csv(args, env):
     if 'instructor' not in data.columns:
         check(args.instructor is not None, "need to specify instructor")
         data['instructor'] = args.instructor
-    if 'date' not in data.columns:
-        data['date'] = args.date
-    if 'user_id' not in data.columns:
-        data['user_id'] = data['name'].apply(construct_user_name)
     if 'badge' not in data.columns:
         check(args.badge_type is not None, "need to specify badge type")
         data['badge'] = args.badge_type
-    if 'language' not in data.columns:
-        data['language'] = args.language
-    if 'duration' not in data.columns:
-        data['duration'] = args.duration
+    if 'user_id' not in data.columns:
+        data['user_id'] = data['name'].apply(construct_user_name)
+    for k in ['date', 'language', 'duration', 'course_date']:
+        if k not in data.columns:
+            data[k] = getattr(args, k)
     for _, row in data.iterrows():
         create_certificate(
             row['badge'], row['language'], row['instructor'], row['user_id'],
-            row['name'], row['date'], row['duration'], args.output_dir, env)
+            row['name'], row['date'], row['duration'], row['course_date'],
+            args.output_dir, env)
 
 
 def process_single(args, env):
@@ -150,12 +151,13 @@ def process_single(args, env):
 
     create_certificate(
         args.badge_type, args.language, args.instructor, user_id,
-        args.name, args.date, args.duration, args.output_dir, env)
+        args.name, args.date, args.duration, args.course_date,
+        args.output_dir, env)
 
 
 def create_certificate(
         badge_type, language, instructor, user_id, name, datestr,
-        duration, output, env):
+        duration, course_date, output, env):
     '''Create a single certificate.'''
 
     template = env.get_template(badge_type + ".svg")
@@ -172,6 +174,8 @@ def create_certificate(
         params['language'] = language
     if duration is not None:
         params['duration'] = duration
+    if course_date is not None:
+        params['course_date'] = course_date
 
     tmp = tempfile.NamedTemporaryFile(suffix='.svg', delete=False)
     tmp.write(bytes(template.render(**params), 'utf-8'))
