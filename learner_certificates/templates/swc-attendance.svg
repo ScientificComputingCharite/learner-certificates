@@ -1277,12 +1277,12 @@
          y="0"
          font-size="14"
          id="tspan6264"
-         style="font-size:14px;fill:#808285;font-family:ArialMT">This certificate has been awarded for participating in the basic software</tspan><tspan
+         style="font-size:14px;fill:#808285;font-family:ArialMT">This certificate has been awarded for participating in the {% if duration is defined %}{{ duration }} hours {% endif %}basic</tspan><tspan
          x="0"
          y="25.6"
          font-size="14"
          id="tspan6266"
-         style="font-size:14px;fill:#808285;font-family:ArialMT">skills training run by Software Carpentry.</tspan><tspan
+         style="font-size:14px;fill:#808285;font-family:ArialMT">software skills training run by Software Carpentry.</tspan><tspan
          x="0"
          y="51.200001"
          font-size="14"

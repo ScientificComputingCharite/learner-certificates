@@ -90,6 +90,9 @@ def parse_args():
         '-l', '--language', choices=['Python', 'R'],
         help='set flavour of software carpentry course')
     parser.add_argument(
+        '-t', '--duration', type=int,
+        help="set the number of hours of the course")
+    parser.add_argument(
         '-o', '--output-dir', default=Path.cwd(), type=Path,
         help='Output directory (current by default)')
     parser.add_argument(
@@ -126,10 +129,12 @@ def process_csv(args, env):
         data['badge'] = args.badge_type
     if 'language' not in data.columns:
         data['language'] = args.language
+    if 'duration' not in data.columns:
+        data['duration'] = args.duration
     for _, row in data.iterrows():
         create_certificate(
             row['badge'], row['language'], row['instructor'], row['user_id'],
-            row['name'], row['date'], args.output_dir, env)
+            row['name'], row['date'], row['duration'], args.output_dir, env)
 
 
 def process_single(args, env):
@@ -145,11 +150,12 @@ def process_single(args, env):
 
     create_certificate(
         args.badge_type, args.language, args.instructor, user_id,
-        args.name, args.date, args.output_dir, env)
+        args.name, args.date, args.duration, args.output_dir, env)
 
 
 def create_certificate(
-        badge_type, language, instructor, user_id, name, datestr, output, env):
+        badge_type, language, instructor, user_id, name, datestr,
+        duration, output, env):
     '''Create a single certificate.'''
 
     template = env.get_template(badge_type + ".svg")
@@ -164,6 +170,8 @@ def create_certificate(
               "date": date.fromisoformat(datestr).strftime(DATE_FORMAT)}
     if language is not None:
         params['language'] = language
+    if duration is not None:
+        params['duration'] = duration
 
     tmp = tempfile.NamedTemporaryFile(suffix='.svg', delete=False)
     tmp.write(bytes(template.render(**params), 'utf-8'))
