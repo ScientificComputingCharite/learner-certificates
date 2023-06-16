@@ -47,10 +47,13 @@ import pandas
 import tempfile
 import string
 import argparse
+import smtplib
 from pathlib import Path
 from datetime import date
 import cairosvg
 from jinja2 import Environment, PackageLoader, select_autoescape
+
+from .send_email import create_email_msg
 
 
 DATE_FORMAT = '%B %-d, %Y'
@@ -99,6 +102,9 @@ def parse_args():
         '-o', '--output-dir', default=Path.cwd(), type=Path,
         help='Output directory (current by default)')
     parser.add_argument(
+        '-m', '--mail-server',
+        help='the SMTP server used to send certificates')
+    parser.add_argument(
         '-d', '--date', default=date.isoformat(date.today()),
         help='Date of certificate, defaults to today')
     parser.add_argument(
@@ -106,6 +112,8 @@ def parse_args():
         help="Image file containing a signature (350x100 pixels)")
     parser.add_argument(
         '-i', '--instructor', help='Name of instructor')
+    parser.add_argument(
+        '-e', '--instructor-email', help='The email address of the instructor')
     grp = parser.add_mutually_exclusive_group(required=True)
     grp.add_argument(
         '-c', '--csv', type=Path, dest='csv_file', help='CSV file')
@@ -114,6 +122,8 @@ def parse_args():
     parser.add_argument(
         '-u', '--userid', dest='user_id',
         help='User ID, default construct from name')
+    parser.add_argument(
+        '-E', '--email', help='The email address of the participant')
     args = parser.parse_args()
 
     if args.signature is not None:
@@ -136,11 +146,22 @@ def process_csv(args, env):
         data['badge'] = args.badge
     if 'user_id' not in data.columns:
         data['user_id'] = data['name'].apply(construct_user_name)
-    for k in ['date', 'language', 'duration', 'course_date', 'signature']:
+    for k in ['date', 'language', 'duration', 'course_date', 'signature',
+              'instructor_email']:
         if k not in data.columns and getattr(args, k) is not None:
             data[k] = getattr(args, k)
+    if args.mail_server is not None:
+        check(args.instructor is not None, "need to specify instructor")
+        check('email' in data.columns,
+              "need to specify email address of participants")
+        s = smtplib.SMTP(args.mail_server)
     for _, row in data.iterrows():
-        create_certificate(args.output_dir, env, row)
+        certificate = create_certificate(args.output_dir, env, row)
+        if args.mail_server is not None:
+            msg = create_email_msg(row, certificate, env)
+            s.send_message(msg)
+    if args.mail_server is not None:
+        s.quit()
 
 
 def process_single(args, env):
@@ -148,6 +169,11 @@ def process_single(args, env):
 
     check(args.instructor is not None, "need to specify instructor")
     check(args.badge is not None, "need to specify badge type")
+    if args.mail_server is not None:
+        check(args.instructor_email is not None,
+              "need to specify email address of instructor")
+        check(args.email is not None,
+              "need to specify email address of participant")
 
     if args.user_id is None:
         user_id = construct_user_name(args.name)
@@ -157,12 +183,18 @@ def process_single(args, env):
     params = {}
     for k in ['badge', 'instructor', 'name', 'date']:
         params[k] = getattr(args, k)
-    for k in ['language', 'duration', 'course_date', 'signature']:
+    for k in ['language', 'duration', 'course_date', 'signature',
+              'email', 'instructor_email']:
         if getattr(args, k) is not None:
             params[k] = getattr(args, k)
     params['user_id'] = user_id
 
-    create_certificate(args.output_dir, env, params)
+    certificate = create_certificate(args.output_dir, env, params)
+    if args.mail_server is not None:
+        msg = create_email_msg(params, certificate, env)
+        s = smtplib.SMTP(args.mail_server)
+        s.send_message(msg)
+        s.quit()
 
 
 def create_certificate(output, env, params):
@@ -174,7 +206,7 @@ def create_certificate(output, env, params):
     badge_path = output / Path(params['badge'])
 
     if not badge_path.exists():
-        badge_path.mkdir()
+        badge_path.mkdir(parents=True)
     outputpdf = badge_path / Path(params['user_id']).with_suffix('.pdf')
 
     tmp = tempfile.NamedTemporaryFile(suffix='.svg', delete=False)
@@ -182,6 +214,8 @@ def create_certificate(output, env, params):
     cairosvg.svg2pdf(url=tmp.name, write_to=str(outputpdf), dpi=90)
 
     Path(tmp.name).unlink()
+
+    return outputpdf
 
 
 def check(condition, message):
