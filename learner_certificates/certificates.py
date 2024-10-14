@@ -211,7 +211,8 @@ def create_certificate(output, env, params):
 
     tmp = tempfile.NamedTemporaryFile(suffix='.svg', delete=False)
     tmp.write(bytes(template.render(**params), 'utf-8'))
-    cairosvg.svg2pdf(url=tmp.name, write_to=str(outputpdf), dpi=90)
+    cairosvg.svg2pdf(url=tmp.name, write_to=str(outputpdf), dpi=90,
+                     unsafe=True)
 
     Path(tmp.name).unlink()
 
