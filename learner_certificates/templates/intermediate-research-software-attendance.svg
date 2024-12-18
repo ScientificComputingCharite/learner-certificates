@@ -2865,7 +2865,7 @@
    width="227.84"
    height="65.919998"
    preserveAspectRatio="none"
-   xlink:href="%7B%7B%20signature%20%7D%7D"
+   xlink:href="{{ signature }}"
    id="image1097"
    x="472.93158"
    y="472.5947" />{% endif %}
